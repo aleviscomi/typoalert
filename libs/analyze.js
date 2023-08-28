@@ -80,7 +80,6 @@ async function analyze(inputDomain, provideResultsFlag) {
 
     var result = EnumResult.Unknown;
     var ctargetsResult = {};
-
     
     // get top domains list
     const topDomainsData = await new Promise((resolve) => {
@@ -122,28 +121,8 @@ async function analyze(inputDomain, provideResultsFlag) {
     if(result == EnumResult.ProbablyTypo) {
         const alerts = await checkAlerts(inputDomain, ctargets);
 
-        var maxResult = -1;     // max result found in ctargets
-        ctargets.forEach((ctarget) => {
-            const alertValue = alerts[ctarget]["T10A"] + alerts[ctarget]["DYMA"] + alerts[ctarget]["PHA"] + alerts[ctarget]["PARKA"];
-
-            if (alertValue == -1) {
-                ctargetsResult[ctarget] = EnumResult.ProbablyNotTypo;
-            } else if (alertValue == 0) {
-                ctargetsResult[ctarget] = EnumResult.ProbablyTypo;
-            } else {    // alertValue >= 1
-                if (alerts[ctarget]["PHA"] == 1) {
-                    ctargetsResult[ctarget] = EnumResult.TypoPhishing;
-                } else {
-                    ctargetsResult[ctarget] = EnumResult.Typo;
-                }
-            }
-
-            if (ctargetsResult[ctarget] > maxResult) {
-                maxResult = ctargetsResult[ctarget];
-            }
-        });
-
-        result = maxResult;
+        result = alerts["worstCtargetResult"];     // worst result found in ctargets
+        ctargetsResult = alerts["ctargetsResult"];
     }
 
 

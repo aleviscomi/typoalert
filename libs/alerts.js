@@ -79,7 +79,8 @@ async function checkAlerts(inputDomain, ctargets) {
     // Parked Alert
     const parkA = await evaluateParkedAlert(keyphrases, inputDomainHtml);
 
-    var alerts = {}
+    var ctargetsResult = {};
+    var worstCtargetResult = -1;     // worst result found in ctargets
     for (const ctarget of ctargets) {
         // Top10 Alert & DYM Alert
         const t10DymA = await evaluateTop10AndDymAlerts(inputDomain, ctarget, googleSearch);
@@ -87,10 +88,25 @@ async function checkAlerts(inputDomain, ctargets) {
         // Phishing Alert
         const phA = await evaluatePhishingAlert(inputDomainHtml, ctarget);
 
-        // for each ctarget we provide a map of the alerts
-        alerts[ctarget] = { "T10A": t10DymA["T10A"], "DYMA": t10DymA["DYMA"], "PHA": phA, "PARKA": parkA }
+        const alertValue = t10DymA["T10A"] + t10DymA["DYMA"] + phA + parkA;
+
+        if (alertValue == -1) {
+            ctargetsResult[ctarget] = EnumResult.ProbablyNotTypo;
+        } else if (alertValue == 0) {
+            ctargetsResult[ctarget] = EnumResult.ProbablyTypo;
+        } else {    // alertValue >= 1
+            if (phA == 1) {
+                ctargetsResult[ctarget] = EnumResult.TypoPhishing;
+            } else {
+                ctargetsResult[ctarget] = EnumResult.Typo;
+            }
+        }
+
+        if (ctargetsResult[ctarget] > worstCtargetResult) {
+            worstCtargetResult = ctargetsResult[ctarget];
+        }
     }
 
-    return alerts;
+    return { "worstCtargetResult": worstCtargetResult, "ctargetsResult": ctargetsResult};
 
 }   // checkAlerts
