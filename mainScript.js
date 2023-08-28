@@ -1,0 +1,1 @@
+analyze(window.location.hostname.replace(/^www\./, ""), true);

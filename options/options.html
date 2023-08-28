@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Options</title>
+  <link rel="stylesheet" type="text/css" href="options.css">
+</head>
+<body>
+  <header>
+    <img src="../images/icon/blue/icon48.png" alt="TypoAlert Logo">
+    <h1>TypoAlert - User Domains</h1>
+    <p style="font-size: 16px; color: dimgrey; letter-spacing: 1px;">List of user-verified domains</p>
+  </header>
+  <hr class="divider">
+  <p class="info-message"><span class="info-icon">&#9432;</span>Please enter only the domain name (including subdomains) without 'www' or 'http/s'. (e.g. google.com)</p>
+  <div id="error-banner" class="error-banner"></div>
+  <div style="text-align: center; margin-top: 20px;">
+    <input type="text" id="new-domain" placeholder="Add a new domain">
+    <button id="add-domain">Add Domain</button>
+  </div>
+  <ul id="user-domains">
+    <!-- Display the custom domains here -->
+  </ul>
+
+  <script src="options.js"></script>
+  <script src="../libs/enumResult.js"></script>
+  <script src="../libs/alerts.js"></script>
+  <script src="../libs/ssdeep.js"></script>
+  <script src="../libs/analyze.js"></script>
+</body>
+</html>

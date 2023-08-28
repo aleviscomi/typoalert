@@ -1,0 +1,30 @@
+{
+    "manifest_version": 3,
+    "name": "TypoAlert",
+    "description": "Detect typosquatted domains",
+    "version": "1.0",
+    "action": {
+      "default_title": "TypoAlert",
+      "default_popup": "popup/default/popup.html"
+    },
+    "icons": {
+        "16": "/images/icon/blue/icon16.png",
+        "48": "/images/icon/blue/icon48.png",
+        "128": "/images/icon/blue/icon128.png"
+    },
+    "permissions": [
+      "tabs",
+      "scripting",
+      "storage",
+      "notifications",
+      "webNavigation"
+    ],
+    "host_permissions": [
+        "http://*/*",
+        "https://*/*"
+    ],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "options_page": "options/options.html"
+}
