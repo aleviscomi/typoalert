@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const newDomainInput = document.getElementById('new-domain');
   const addDomainButton = document.getElementById('add-domain');
   const errorBanner = document.getElementById('error-banner');
+  const checkbox = document.querySelector('.switch input');
+  const slider = document.getElementsByClassName('slider')[0];
 
   // Load saved domains from storage and display them
   chrome.storage.sync.get('userDomains', function(result) {
@@ -12,6 +14,47 @@ document.addEventListener('DOMContentLoaded', function() {
       domainList.appendChild(li);
     }
   });
+
+
+  checkbox.addEventListener('change', function() {
+    if (this.checked) {
+      setTimeout(function() {
+        slider.style.display = 'none';
+        document.getElementById('confirm-yes').removeAttribute("disabled");
+      }, 300); // 400 milliseconds is the duration of the transition
+    } else {
+      slider.style.display = 'block';
+    }
+  });
+
+  
+  function showCustomConfirm(message) {
+    return new Promise((resolve) => {
+      document.getElementById('modal-confirm').style.display = 'block';
+      document.getElementById('confirm-message').innerHTML = message;
+      document.getElementById('confirm-window').style.display = 'block';
+  
+      document.getElementById('confirm-yes').addEventListener('click', function() {
+        resolve(true);
+        document.getElementById('confirm-window').style.display = 'none';
+        document.getElementById('modal-confirm').style.display = 'none';
+        document.getElementById('confirm-yes').setAttribute("disabled", "");
+        slider.style.display = 'block';
+        checkbox.checked = false;
+      });
+  
+      document.getElementById('confirm-no').addEventListener('click', function() {
+        resolve(false);
+        document.getElementById('confirm-window').style.display = 'none';
+        document.getElementById('modal-confirm').style.display = 'none';
+        document.getElementById('confirm-yes').setAttribute("disabled", "");
+        slider.style.display = 'block';
+        checkbox.checked = false;
+      });
+    });
+  }
+  
+  
 
   // Add a new domain to the list
   addDomainButton.addEventListener('click', async function() {
@@ -25,15 +68,21 @@ document.addEventListener('DOMContentLoaded', function() {
           var userConfirm;
           switch(analysis) {
             case EnumResult.ProbablyTypo: {
-              userConfirm = confirm(`TypoAlert has classified ${newDomain} as ProbablyTypo. Are you sure you want to proceed?`);
+              // userConfirm = confirm(`TypoAlert has classified ${newDomain} as ProbablyTypo. Are you sure you want to proceed?`);
+              const message = `TypoAlert has classified <b>${newDomain}</b> as <b>ProbablyTypo</b>. Are you sure you want to proceed?`;
+              userConfirm = await showCustomConfirm(message);
               break;
             }
             case EnumResult.Typo: {
-              userConfirm = confirm(`TypoAlert has classified ${newDomain} as Typo. Are you sure you want to proceed?`);
+              // userConfirm = confirm(`TypoAlert has classified ${newDomain} as Typo. Are you sure you want to proceed?`);
+              const message = `TypoAlert has classified <b>${newDomain}</b> as <b>Typo</b>. Are you sure you want to proceed?`;
+              userConfirm = await showCustomConfirm(message);
               break;
             }
             case EnumResult.TypoPhishing: {
-              userConfirm = confirm(`TypoAlert has classified ${newDomain} as Typo/Phishing. Are you sure you want to proceed?`);
+              // userConfirm = confirm(`TypoAlert has classified ${newDomain} as Typo/Phishing. Are you sure you want to proceed?`);
+              const message = `TypoAlert has classified <b>${newDomain}</b> as <b>Typo/Phishing</b>. Are you sure you want to proceed?`;
+              userConfirm = await showCustomConfirm(message);
               break;
             }
           }
