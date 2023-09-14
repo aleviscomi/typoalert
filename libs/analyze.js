@@ -39,21 +39,21 @@ function provideResults(res, ctargetsResult) {
             break;
         }
         case EnumResult.NotTypo: {
-            chrome.runtime.sendMessage({ action: "changeIconColor", color: "blue" });
-            chrome.runtime.sendMessage({ action: "changePopup", color: "blue" });
+            chrome.runtime.sendMessage({ action: "changeIconColor", color: "green" });
+            chrome.runtime.sendMessage({ action: "changePopup", color: "green" });
             break;
         }
         case EnumResult.ProbablyNotTypo: {
             chrome.storage.local.set({ "ctargets": ctargetsResult });
-            chrome.runtime.sendMessage({ action: "changeIconColor", color: "blueGrey" });
-            chrome.runtime.sendMessage({ action: "changePopup", color: "blueGrey" });
+            chrome.runtime.sendMessage({ action: "changeIconColor", color: "greenGrey" });
+            chrome.runtime.sendMessage({ action: "changePopup", color: "greenGrey" });
             chrome.runtime.sendMessage({ action: "showNotification" }, (response) => {});
             break;
         }
         case EnumResult.ProbablyTypo: {
             chrome.storage.local.set({ "ctargets": ctargetsResult });
-            chrome.runtime.sendMessage({ action: "changeIconColor", color: "orange" });
-            chrome.runtime.sendMessage({ action: "changePopup", color: "orange" });
+            chrome.runtime.sendMessage({ action: "changeIconColor", color: "yellow" });
+            chrome.runtime.sendMessage({ action: "changePopup", color: "yellow" });
             alert("Attention: This domain might be a typo.\nOpen the extension popup to view more info.");
             break;
         }

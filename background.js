@@ -70,9 +70,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       if (!changeInfo.url.startsWith("http")) {
         chrome.action.setIcon({ 
           path: {
-                "16": "/images/icon/blue/icon16.png",
-                "48": "/images/icon/blue/icon48.png",
-                "128": "/images/icon/blue/icon128.png"
+                "16": "/images/icon/green/icon16.png",
+                "48": "/images/icon/green/icon48.png",
+                "128": "/images/icon/green/icon128.png"
             }
         });
         chrome.action.setPopup({ 
@@ -111,9 +111,9 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
     else if (! url.startsWith("http")) {
       chrome.action.setIcon({ 
         path: {
-              "16": "/images/icon/blue/icon16.png",
-              "48": "/images/icon/blue/icon48.png",
-              "128": "/images/icon/blue/icon128.png"
+              "16": "/images/icon/green/icon16.png",
+              "48": "/images/icon/green/icon48.png",
+              "128": "/images/icon/green/icon128.png"
           }
       });
       chrome.action.setPopup({ 
