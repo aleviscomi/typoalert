@@ -31,43 +31,37 @@ function damerauLevenshteinDistance(str1, str2) {
 }   // damerauLevenshteinDistance
 
 
-function provideResults(res, ctargetsResult) {
+function provideResults(res, ctargetsResult, port) {
     switch(res) {
         case EnumResult.Unknown: {
-            chrome.runtime.sendMessage({ action: "changeIconColor", color: "grey" });
-            chrome.runtime.sendMessage({ action: "changePopup", color: "grey" });
+            port.postMessage({ action: "changeIconAndPopup", color: "grey" });
             break;
         }
         case EnumResult.NotTypo: {
-            chrome.runtime.sendMessage({ action: "changeIconColor", color: "green" });
-            chrome.runtime.sendMessage({ action: "changePopup", color: "green" });
+            port.postMessage({ action: "changeIconAndPopup", color: "green" });
             break;
         }
         case EnumResult.ProbablyNotTypo: {
             chrome.storage.local.set({ "ctargets": ctargetsResult });
-            chrome.runtime.sendMessage({ action: "changeIconColor", color: "greenGrey" });
-            chrome.runtime.sendMessage({ action: "changePopup", color: "greenGrey" });
-            chrome.runtime.sendMessage({ action: "showNotification" }, (response) => {});
+            port.postMessage({ action: "changeIconAndPopup", color: "greenYellow" });
+            port.postMessage({ action: "showNotification" }, (response) => {});
             break;
         }
         case EnumResult.ProbablyTypo: {
             chrome.storage.local.set({ "ctargets": ctargetsResult });
-            chrome.runtime.sendMessage({ action: "changeIconColor", color: "yellow" });
-            chrome.runtime.sendMessage({ action: "changePopup", color: "yellow" });
+            port.postMessage({ action: "changeIconAndPopup", color: "yellow" });
             alert("Attention: This domain might be a typo.\nOpen the extension popup to view more info.");
             break;
         }
         case EnumResult.Typo: {
             chrome.storage.local.set({ "ctargets": ctargetsResult });
-            chrome.runtime.sendMessage({ action: "changeIconColor", color: "red" });
-            chrome.runtime.sendMessage({ action: "changePopup", color: "red" });
+            port.postMessage({ action: "changeIconAndPopup", color: "red" });
             alert("Warning: It's highly possible that this domain is a typo.\nOpen the extension popup to view more info.");
             break;
         }
         case EnumResult.TypoPhishing: {
             chrome.storage.local.set({ "ctargets": ctargetsResult });
-            chrome.runtime.sendMessage({ action: "changeIconColor", color: "dark_red_phishing" });
-            chrome.runtime.sendMessage({ action: "changePopup", color: "dark_red_phishing" });
+            port.postMessage({ action: "changeIconAndPopup", color: "dark_red_phishing" });
             alert("Caution: This domain is a typo and may be a phishing attempt.\nOpen the extension popup to view more info.");
             break;
         }
@@ -77,6 +71,7 @@ function provideResults(res, ctargetsResult) {
 
 
 async function analyze(inputDomain, provideResultsFlag) {
+    var port = chrome.runtime.connect({name: "connection"});
 
     var result = EnumResult.Unknown;
     var ctargetsResult = {};
@@ -119,7 +114,7 @@ async function analyze(inputDomain, provideResultsFlag) {
 
     // check alerts
     if(result == EnumResult.ProbablyTypo) {
-        const alerts = await checkAlerts(inputDomain, ctargets);
+        const alerts = await checkAlerts(inputDomain, ctargets, port);
 
         result = alerts["worstCtargetResult"];     // worst result found in ctargets
         ctargetsResult = alerts["ctargetsResult"];
@@ -128,9 +123,10 @@ async function analyze(inputDomain, provideResultsFlag) {
 
     // provide results
     if (provideResultsFlag) {
-        provideResults(result, ctargetsResult);
+        provideResults(result, ctargetsResult, port);
     }
 
+    port.disconnect();
     return result;
 
 }   // analyze

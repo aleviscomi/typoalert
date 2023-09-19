@@ -1,14 +1,14 @@
-async function evaluateTop10AndDymAlerts(inputDomain, ctarget, googleSearch) {
-    const googleResults = googleSearch["searchResults"];
-    const dym = googleSearch["dym"];
+async function evaluateTop10AndDymAlerts(inputDomain, ctarget, searchResults) {
+    const results = searchResults["searchResults"];
+    const dym = searchResults["dym"];
 
     var t10a, dyma;
-    if ( (googleResults.includes(inputDomain) && googleResults.includes(ctarget)) ||
-            (!googleResults.includes(inputDomain) && !googleResults.includes(ctarget)) ) {
+    if ( (results.includes(inputDomain) && results.includes(ctarget)) ||
+            (!results.includes(inputDomain) && !results.includes(ctarget)) ) {
         t10a = 0;            
-    } else if (!googleResults.includes(inputDomain) && googleResults.includes(ctarget)) {
+    } else if (!results.includes(inputDomain) && results.includes(ctarget)) {
         t10a = 1;
-    } else if (googleResults.includes(inputDomain) && !googleResults.includes(ctarget)) {
+    } else if (results.includes(inputDomain) && !results.includes(ctarget)) {
         t10a = -1;
     }
 
@@ -23,12 +23,7 @@ async function evaluateTop10AndDymAlerts(inputDomain, ctarget, googleSearch) {
 }   // evaluateTop10AndDymAlerts
 
 
-async function evaluatePhishingAlert(inputDomainHtml, ctarget) {
-    // get html of ctarget domain
-    const ctargetHtml = await new Promise((resolve) => {
-        chrome.runtime.sendMessage({ action: "getCtargetHtml", ctargetUrl: "https://" + ctarget }, resolve);
-    });
-    
+async function evaluatePhishingAlert(inputDomainHtml, ctargetHtml) {
     const inputDomainHash = ssdeep.digest(inputDomainHtml);
     const ctargetHash = ssdeep.digest(ctargetHtml);
 
@@ -61,11 +56,17 @@ async function evaluateParkedAlert(keyphrases, inputDomainHtml) {
 }   // evaluateParkedAlert
 
 
-async function checkAlerts(inputDomain, ctargets) {
-    // search inputDomain on Google
-    const googleSearch = await new Promise((resolve) => {
-        chrome.runtime.sendMessage({ action: "getGoogleResultsAndDym", inputDomain: inputDomain }, resolve);
+async function checkAlerts(inputDomain, ctargets, port) {
+    // search inputDomain on browser
+    const searchResults = await new Promise((resolve) => {
+        port.onMessage.addListener((response) => {
+            resolve(response);
+        });
+
+        // port.postMessage({ action: "googleSearch", inputDomain });
+        port.postMessage({ action: "bingSearch", inputDomain });
     });
+    console.log(searchResults);
 
     // get keyphrases for domain parking
     const keyphrasesDomainParkingData = await new Promise((resolve) => {
@@ -83,10 +84,17 @@ async function checkAlerts(inputDomain, ctargets) {
     var worstCtargetResult = -1;     // worst result found in ctargets
     for (const ctarget of ctargets) {
         // Top10 Alert & DYM Alert
-        const t10DymA = await evaluateTop10AndDymAlerts(inputDomain, ctarget, googleSearch);
+        const t10DymA = await evaluateTop10AndDymAlerts(inputDomain, ctarget, searchResults);
 
         // Phishing Alert
-        const phA = await evaluatePhishingAlert(inputDomainHtml, ctarget);
+        const ctargetHtml = await new Promise((resolve) => {
+            port.onMessage.addListener((response) => {
+                resolve(response);
+            });
+    
+            port.postMessage({ action: "getCtargetHtml", ctargetUrl: "https://" + ctarget });
+        });
+        const phA = await evaluatePhishingAlert(inputDomainHtml, ctargetHtml);
 
         const alertValue = t10DymA["T10A"] + t10DymA["DYMA"] + phA + parkA;
 

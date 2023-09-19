@@ -131,9 +131,69 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   });
 });
 
+chrome.runtime.onConnect.addListener(function(port) {
+  port.onMessage.addListener(function(message) {
+    if (message.action === "changeIconAndPopup") {
+      chrome.action.setIcon({ 
+        path: {
+              "16": "/images/icon/" + message.color + "/icon16.png",
+              "48": "/images/icon/" + message.color + "/icon48.png",
+              "128": "/images/icon/" + message.color + "/icon128.png"
+          }
+      });
+  
+      chrome.action.setPopup({ 
+        popup: "/popup/" + message.color + "/popup.html"
+      });
+    }
+    if (message.action === "googleSearch") {
+      googleSearch(message.inputDomain)
+        .then(data => {
+          port.postMessage(data);
+        })
+        .catch(error => {
+          port.postMessage({ error: error.message });
+        });
+      
+      return true;
+    }
+    if (message.action === "bingSearch") {
+      bingSearch(message.inputDomain)
+        .then(data => {
+          port.postMessage(data);
+        })
+        .catch(error => {
+          port.postMessage({ error: error.message });
+        });
+      
+      return true;
+    }
+    if (message.action === "getCtargetHtml") {
+      getCtargetHtml(message.ctargetUrl)
+        .then(data => {
+          port.postMessage(data);
+        })
+        .catch(error => {
+          port.postMessage({ error: error.message });
+        });
+      
+      return true;
+    }
+    if (message.action === "showNotification") {
+      const notificationOptions = {
+        type: "basic",
+        iconUrl: "images/info.png",
+        title: "TypoAlert Note",
+        message: "Did you mean another domain? Open extension popup for more info."
+      };
+    
+      chrome.notifications.create("typoAlertNotification", notificationOptions);
+    }
+  })
+});
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-  if (message.action === "changeIconColor") {
+  if (message.action === "changeIconAndPopup") {
     chrome.action.setIcon({ 
       path: {
             "16": "/images/icon/" + message.color + "/icon16.png",
@@ -141,48 +201,34 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             "128": "/images/icon/" + message.color + "/icon128.png"
         }
     });
-  }
-  if (message.action === "changePopup") {
+
     chrome.action.setPopup({ 
       popup: "/popup/" + message.color + "/popup.html"
     });
   }
-  if (message.action === "getGoogleResultsAndDym") {
-    getGoogleResultsAndDym(message.inputDomain)
-      .then(data => {
-        sendResponse(data);
-      })
-      .catch(error => {
-        sendResponse({ error: error.message });
-      });
-    
-    return true;
-  }
-  if (message.action === "getCtargetHtml") {
-    getCtargetHtml(message.ctargetUrl)
-      .then(data => {
-        sendResponse(data);
-      })
-      .catch(error => {
-        sendResponse({ error: error.message });
-      });
-    
-    return true;
-  }
-  if (message.action === "showNotification") {
-    const notificationOptions = {
-      type: "basic",
-      iconUrl: "images/info.png",
-      title: "TypoAlert Note",
-      message: "Did you mean another domain? Open extension popup for more info."
-    };
-  
-    chrome.notifications.create("typoAlertNotification", notificationOptions);
-  }
 });
 
+async function bingSearch(inputDomain) {
+  try {
+    const apiKey = '***';
+    const url = `https://api.bing.microsoft.com/v7.0/search?q=${inputDomain}&count=10`;
 
-async function getGoogleResultsAndDym(inputDomain) {
+    const response = await fetch(url, { headers: { 'Ocp-Apim-Subscription-Key': apiKey } });
+    const data = await response.json();
+    const searchResults = data.webPages.value.map(item => {
+      let url = new URL(item.displayUrl);
+      return url.hostname.replace(/^www\./, '');
+    });
+    const dym = data.queryContext.alteredQuery !== undefined ? data.queryContext.alteredQuery : "";
+
+
+    return { "searchResults" : searchResults, "dym": dym };
+  } catch (error) {
+    throw 'ERROR: ' + error;
+  }
+}
+
+async function googleSearch(inputDomain) {
   try {
     const response = await fetch('https://www.google.com/search?q=' + inputDomain + '&num=10');
     const data = await response.text();
@@ -230,11 +276,12 @@ async function getGoogleResultsAndDym(inputDomain) {
   }
 }
 
+
 async function getCtargetHtml(ctargetUrl) {
   try {
     const response = await fetch(ctargetUrl);
     const data = await response.text();
-    const result = "<body>" + data.split("<body>")[1].split("</body>")[0] + "</body>";
+    const result = "<body" + data.split("<body")[1].split("</body>")[0] + "</body>";
     return result;
   } catch (error) {
     throw 'ERROR: ' + error;
