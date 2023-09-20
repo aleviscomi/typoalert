@@ -1,5 +1,5 @@
-chrome.storage.local.get('ctargets', function(result) {
-    const ctargets = Object.keys(result.ctargets);
+chrome.storage.local.get('ctargetsAnalysis', function(result) {
+    const ctargets = Object.keys(result.ctargetsAnalysis);
     const ctargetsList = document.getElementById('ctargets-sites');
 
     if(ctargetsList) {

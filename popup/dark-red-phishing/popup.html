@@ -9,12 +9,18 @@
 <body>
     <div class="popup-container">
         <div class="popup-content">
-            <h1>You're safe!</h1>
-            <p>The website you're visiting is <b>not</b> a typosquatting attempt.</p>
-            <p>Continue browsing safely.</p>
+            <h1>Caution!</h1>
+            <p>This domain is a typo and may be a <b>phishing attempt!</b></p>
+            <p>Be cautious and verify the URL.</p>
+            <hr>
+            <p id="ctargets-sites">Maybe you wanted to visit: </p>
+            <div id="others"></div>
             <button id="close-button">Close</button>
             <button id="options-button">Options</button>
+        </div>
     </div>
     <script src="../popup.js"></script>
+    <script type="module" src="ctargets.js"></script>
+    <script type="module" src="/src/result.js"></script>
 </body>
 </html>

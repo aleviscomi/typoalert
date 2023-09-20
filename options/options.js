@@ -1,3 +1,6 @@
+import Result from "../src/result.js";
+import * as analyzer from "../src/analyzer.js";
+
 document.addEventListener('DOMContentLoaded', function() {
   const domainList = document.getElementById('user-domains');
   const newDomainInput = document.getElementById('new-domain');
@@ -63,24 +66,21 @@ document.addEventListener('DOMContentLoaded', function() {
       const domainRegex = /^(?!www)([-a-zA-Z0-9@:%._\+~#=]+\.)+[a-z]{2,6}$/;
 
       if (domainRegex.test(newDomain)) {
-        const analysis = await analyze(newDomain, false);
-        if (analysis >= EnumResult.ProbablyTypo) {
+        const analysis = (await analyzer.analyzeDomain(newDomain)).finalAnalysis;
+        if (analysis >= Result.ProbablyTypo) {
           var userConfirm;
           switch(analysis) {
-            case EnumResult.ProbablyTypo: {
-              // userConfirm = confirm(`TypoAlert has classified ${newDomain} as ProbablyTypo. Are you sure you want to proceed?`);
+            case Result.ProbablyTypo: {
               const message = `TypoAlert has classified <b>${newDomain}</b> as <b>ProbablyTypo</b>. Are you sure you want to proceed?`;
               userConfirm = await showCustomConfirm(message);
               break;
             }
-            case EnumResult.Typo: {
-              // userConfirm = confirm(`TypoAlert has classified ${newDomain} as Typo. Are you sure you want to proceed?`);
+            case Result.Typo: {
               const message = `TypoAlert has classified <b>${newDomain}</b> as <b>Typo</b>. Are you sure you want to proceed?`;
               userConfirm = await showCustomConfirm(message);
               break;
             }
-            case EnumResult.TypoPhishing: {
-              // userConfirm = confirm(`TypoAlert has classified ${newDomain} as Typo/Phishing. Are you sure you want to proceed?`);
+            case Result.TypoPhishing: {
               const message = `TypoAlert has classified <b>${newDomain}</b> as <b>Typo/Phishing</b>. Are you sure you want to proceed?`;
               userConfirm = await showCustomConfirm(message);
               break;

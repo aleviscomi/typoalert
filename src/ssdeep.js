@@ -1,11 +1,4 @@
 var ssdeep = {};
-var isBrowser = false;
-if (typeof module !== 'undefined' && module.exports) {
-    exports = module.exports = ssdeep;
-} else {//for browser
-    this.ssdeep = ssdeep;
-    isBrowser = true;
-}
 
 var HASH_PRIME = 16777619;
 var HASH_INIT = 671226215;
@@ -218,15 +211,15 @@ function matchScore (s1, s2) {
 
 ssdeep.digest = function (data) {
     if (typeof data === 'string') {
-        data = isBrowser ? toUTF8Array(data) : Buffer.from(data).toJSON().data;
+        data = toUTF8Array(data);
     }
     return digest(data);
 };
 
-ssdeep.similarity = function (d1, d2) {
+ssdeep.similarity = function sim(d1, d2) {
     var b1 = B64.indexOf(d1.charAt(0));
     var b2 = B64.indexOf(d2.charAt(0));
-    if (b1 > b2) return arguments.callee(d2, d1);
+    if (b1 > b2) return sim(d2, d1);
 
     if (Math.abs(b1-b2) > 1) {
         return 0;
@@ -237,3 +230,4 @@ ssdeep.similarity = function (d1, d2) {
     }
 };
 
+export default ssdeep;

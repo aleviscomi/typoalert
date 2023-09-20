@@ -1,8 +1,10 @@
-chrome.storage.local.get('ctargets', function(result) {
+import Result from "../../src/result.js";
+
+chrome.storage.local.get('ctargetsAnalysis', function(result) {
     var ctargets = [];
     var others = [];
-    Object.keys(result.ctargets).forEach(ctarget => {
-        if (result.ctargets[ctarget] === EnumResult.Typo) {
+    Object.keys(result.ctargetsAnalysis).forEach(ctarget => {
+        if (result.ctargetsAnalysis[ctarget] === Result.Typo) {
             ctargets.push(ctarget);
         } else {
             others.push(ctarget);
@@ -27,9 +29,9 @@ chrome.storage.local.get('ctargets', function(result) {
 
             others.forEach(el => {
                 var category = "";
-                if (result.ctargets[el] === EnumResult.ProbablyNotTypo) {
+                if (result.ctargetsAnalysis[el] === Result.ProbablyNotTypo) {
                     category = "ProbablyNotTypo";
-                } else if (result.ctargets[el] === EnumResult.ProbablyTypo) {
+                } else if (result.ctargetsAnalysis[el] === Result.ProbablyTypo) {
                     category = "ProbablyTypo";
                 }
                 

@@ -1,3 +1,5 @@
+import { setGreen } from "../../src/ui-controller.js"
+
 document.addEventListener('DOMContentLoaded', function() {
     const addDomainButton = document.getElementById('add-domain');
 
@@ -14,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   chrome.storage.sync.set({ userDomains: userDomains });
         
                   alert(newDomain + " added to user domains!")
-                  chrome.runtime.sendMessage({ action: "changeIconAndPopup", color: "green" });
+                  setGreen();
                 }
               });
             }
