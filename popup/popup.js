@@ -31,6 +31,8 @@ document.addEventListener("DOMContentLoaded", function() {
             analyzer.showAnalysis();
     
             await analyzer.updateAnalysisCache();
+
+            alert("Analysis Redone");
         });
     }
 });

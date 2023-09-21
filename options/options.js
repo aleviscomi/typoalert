@@ -1,5 +1,6 @@
 import Result from "../src/result.js";
 import Analyzer from "../src/analyzer.js";
+import * as ecm from "../src/ecm.js";
 
 document.addEventListener('DOMContentLoaded', function() {
   const domainList = document.getElementById('user-domains');
@@ -153,6 +154,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const userDomains = result.userDomains || [];
         const updatedDomains = userDomains.filter(d => d !== domain);
         chrome.storage.sync.set({ userDomains: updatedDomains });
+      });
+
+      // Clear domains in analysis cache with DL-1 from domain removed
+      chrome.storage.sync.get('analysisCache', function(result) {
+        const cache = result.analysisCache || [];
+        const updatedCache = cache.filter(d => ecm.damerauLevenshteinDistance(d.domain, domain) > 1);
+        chrome.storage.sync.set({ analysisCache: updatedCache });
       });
     });
 
