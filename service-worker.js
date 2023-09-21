@@ -1,6 +1,6 @@
 import * as utils from "/src/utils.js"
 import * as uiController from "/src/ui-controller.js"
-import * as analyzer from "/src/analyzer.js"
+import Analyzer from "/src/analyzer.js"
 
 // EVENTS
 
@@ -45,6 +45,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   });
 });
 
+
 // FUNCTIONS
 
 async function main(url) {
@@ -57,7 +58,15 @@ async function main(url) {
   else {
     var rawUrl = new URL(url);
     var domain = rawUrl.hostname.replace(/^www\./, "");
-    var analysis = await analyzer.analyzeDomain(domain);
-    analyzer.showAnalysis(analysis)
+
+    var analyzer = new Analyzer();
+    analyzer.domain = domain;
+
+    if (! await analyzer.isDomainInAnalysisCache()) {
+      await analyzer.analyze();
+    }
+    
+    analyzer.showAnalysis();
+    await analyzer.updateAnalysisCache();
   }
 }

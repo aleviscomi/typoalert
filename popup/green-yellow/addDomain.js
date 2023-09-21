@@ -1,4 +1,5 @@
 import { setGreen } from "../../src/ui-controller.js"
+import Analyzer from "../../src/analyzer.js";
 
 document.addEventListener('DOMContentLoaded', function() {
     const addDomainButton = document.getElementById('add-domain');
@@ -17,6 +18,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
                   alert(newDomain + " added to user domains!");
                   setGreen();
+                  
+                  // remove newDomain from analysis cache
+                  var analyzer = new Analyzer();
+                  analyzer.domain = newDomain;
+                  analyzer.removeDomainFromAnalysisCache();
                 }
               });
             }

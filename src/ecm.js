@@ -1,4 +1,4 @@
-function damerauLevenshteinDistance(str1, str2) {
+export function damerauLevenshteinDistance(str1, str2) {
     const lenStr1 = str1.length;
     const lenStr2 = str2.length;
 
@@ -30,8 +30,6 @@ function damerauLevenshteinDistance(str1, str2) {
 
 }   // damerauLevenshteinDistance
 
-function checkTldDifference(domain1, domain2) {
+export function checkTldDifference(domain1, domain2) {
     // TODO
 }
-
-export {damerauLevenshteinDistance};

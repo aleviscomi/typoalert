@@ -13,13 +13,24 @@
   <hr class="divider">
   <p class="info-message"><span class="info-icon">&#9432;</span>Please enter only the domain name (including subdomains) without 'www' or 'http/s'. (e.g. google.com)</p>
   <div id="error-banner" class="error-banner"></div>
-  <div style="text-align: center; margin-top: 20px;">
-    <input type="text" id="new-domain" placeholder="Add a new domain">
-    <button id="add-domain">Add Domain</button>
+  
+  <div class="container">
+    <div></div> <!-- Colonna di sinistra vuota -->
+    <div>
+      <div style="text-align: center; margin-top: 20px;">
+        <input type="text" id="new-domain" placeholder="Add a new domain">
+        <button id="add-domain">Add Domain</button>
+      </div>
+      <ul id="user-domains">
+        <!-- Display the custom domains here -->
+      </ul>
+    </div>
+    <div class="others-container">
+      <p>Other options:</p>
+      <hr class="divider">
+      <button id="clear-analysis-cache">Clear Analysis Cache</button>
+    </div>
   </div>
-  <ul id="user-domains">
-    <!-- Display the custom domains here -->
-  </ul>
 
   
 

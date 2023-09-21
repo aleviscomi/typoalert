@@ -1,12 +1,11 @@
 import * as utils from "./utils.js";
-import ssdeep from "./ssdeep.js";
+import Result from "./result.js"
 
-export async function evaluateTop10Alert(inputDomain, ctarget, search) {
-    const results = search.searchResults;
+async function evaluateTop10Alert(inputDomain, ctarget, searchResults) {
 
-    if (!results.includes(inputDomain) && results.includes(ctarget)) {
+    if (!searchResults.includes(inputDomain) && searchResults.includes(ctarget)) {
         return 1;
-    } else if (results.includes(inputDomain) && !results.includes(ctarget)) {
+    } else if (searchResults.includes(inputDomain) && !searchResults.includes(ctarget)) {
         return -1;
     }
 
@@ -14,8 +13,7 @@ export async function evaluateTop10Alert(inputDomain, ctarget, search) {
 
 }   // evaluateTop10
 
-export async function evaluateDymAlert(ctarget, search) {
-    const dym = search.dym;
+async function evaluateDymAlert(ctarget, dym) {
 
     if (dym === ctarget) {
         return 1;
@@ -26,13 +24,10 @@ export async function evaluateDymAlert(ctarget, search) {
 }   // evaluateDym
 
 
-export async function evaluatePhishingAlert(inputDomainHtml, ctargetHtml) {
-    const inputDomainHash = ssdeep.digest(inputDomainHtml);
-    const ctargetHash = ssdeep.digest(ctargetHtml);
+async function evaluatePhishingAlert(inputDomainHtml, ctargetHtml, phishingDetector) {
+    phishingDetector.evaluate(inputDomainHtml, ctargetHtml);
 
-    const similarityValue = ssdeep.similarity(inputDomainHash, ctargetHash);
-
-    if (similarityValue >= 33) {
+    if (phishingDetector.similarityValue >= 33) {
         return 1;
     }
     
@@ -41,7 +36,7 @@ export async function evaluatePhishingAlert(inputDomainHtml, ctargetHtml) {
 }   // evaluatePhishingAlert
 
 
-export async function evaluateParkingAlert(inputDomainHtml) {
+async function evaluateParkingAlert(inputDomainHtml) {
     const keyphrases = await utils.getFromStorage("keyphrasesDomainParking", "local");
 
     var numKeyphrases = 0;
@@ -59,3 +54,63 @@ export async function evaluateParkingAlert(inputDomainHtml) {
     return 0;
 
 }   // evaluateParkedAlert
+
+export async function analyzeAlerts(inputDomain, ctargets, searcher, phishingDetector) {
+    var ctargetsAnalysis = {};
+    var worstAnalysis = Number.NEGATIVE_INFINITY;
+
+    // do a search on web
+    await searcher.search(inputDomain);
+    
+    // get input domain html
+    var inputDomainHtml;
+    try {
+        inputDomainHtml = await utils.getHtmlBodyFromActiveTab();
+    } catch(error) {
+        try {
+            inputDomainHtml = await utils.getHtmlBodyFromUrl(`https://${inputDomain}`);
+        } catch(error) {
+            inputDomainHtml = await utils.getHtmlBodyFromUrl(`http://${inputDomain}`);
+        }
+    }
+
+    // Parking Alert
+    const parkingAlert = await evaluateParkingAlert(inputDomainHtml);
+
+    var ctarget;
+    for (ctarget of ctargets) {
+        var top10Alert = await evaluateTop10Alert(inputDomain, ctarget, searcher.searchResults);
+        var dymAlert = await evaluateDymAlert(ctarget, searcher.dym);
+
+        // get ctarget html
+        var ctargetHtml;
+        try {
+            ctargetHtml = await utils.getHtmlBodyFromUrl(`https://${ctarget}`);
+        } catch(error) {
+            ctargetHtml = await utils.getHtmlBodyFromUrl(`http://${ctarget}`);
+        }
+
+        var phishingAlert = await evaluatePhishingAlert(inputDomainHtml, ctargetHtml, phishingDetector);
+
+        var alertValue = top10Alert + dymAlert + phishingAlert + parkingAlert;
+
+        if (alertValue == -1) {
+            ctargetsAnalysis[ctarget] = Result.ProbablyNotTypo;
+        } else if (alertValue == 0) {
+            ctargetsAnalysis[ctarget] = Result.ProbablyTypo;
+        } else {    // alertValue >= 1
+            if (phishingAlert == 1) {
+                ctargetsAnalysis[ctarget] = Result.TypoPhishing;
+            } else {
+                ctargetsAnalysis[ctarget] = Result.Typo;
+            }
+        }
+
+        if (ctargetsAnalysis[ctarget] > worstAnalysis) {
+            worstAnalysis = ctargetsAnalysis[ctarget];
+        }
+    }
+
+    return { "worstAnalysis": worstAnalysis, "ctargetsAnalysis": ctargetsAnalysis };
+
+}   // getAlert

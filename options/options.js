@@ -1,5 +1,5 @@
 import Result from "../src/result.js";
-import * as analyzer from "../src/analyzer.js";
+import Analyzer from "../src/analyzer.js";
 
 document.addEventListener('DOMContentLoaded', function() {
   const domainList = document.getElementById('user-domains');
@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const errorBanner = document.getElementById('error-banner');
   const checkbox = document.querySelector('.switch input');
   const slider = document.getElementsByClassName('slider')[0];
+  const clearAnalysisCacheButton = document.getElementById('clear-analysis-cache');
 
   // Load saved domains from storage and display them
   chrome.storage.sync.get('userDomains', function(result) {
@@ -18,6 +19,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  clearAnalysisCacheButton.addEventListener("click", function() {
+    chrome.storage.sync.set({ "analysisCache": [] });
+    alert("Analysis cache cleared");
+  })
 
   checkbox.addEventListener('change', function() {
     if (this.checked) {
@@ -66,7 +71,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const domainRegex = /^(?!www)([-a-zA-Z0-9@:%._\+~#=]+\.)+[a-z]{2,6}$/;
 
       if (domainRegex.test(newDomain)) {
-        const analysis = (await analyzer.analyzeDomain(newDomain)).finalAnalysis;
+        var analyzer = new Analyzer();
+        analyzer.domain = newDomain;
+        if (! await analyzer.isDomainInAnalysisCache()) {
+          await analyzer.analyze();
+        }
+        await analyzer.updateAnalysisCache();
+
+        const analysis = analyzer.finalAnalysis;
         if (analysis >= Result.ProbablyTypo) {
           var userConfirm;
           switch(analysis) {
@@ -101,10 +113,11 @@ document.addEventListener('DOMContentLoaded', function() {
           domainList.appendChild(li);
     
           // Save the updated domain list to storage
-          chrome.storage.sync.get('userDomains', function(result) {
+          chrome.storage.sync.get('userDomains', async function(result) {
             const userDomains = result.userDomains || [];
             userDomains.push(newDomain);
             chrome.storage.sync.set({ userDomains: userDomains });
+            await analyzer.removeDomainFromAnalysisCache();
           });
         } else {
           errorBanner.textContent = 'Domain already exists.';
