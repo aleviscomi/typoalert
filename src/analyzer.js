@@ -134,7 +134,8 @@ export default class Analyzer {
             this.#analysis = cache[indexDomain].analysis;
             this.#otherTargets = cache[indexDomain].otherTargets;
             var lastAnalysis = {
-                "domain": this.#inputDomain,
+                "inputDomain": this.#inputDomain,
+                "visitedDomain": this.#visitedDomain,
                 "target": this.#target,
                 "analysis": this.#analysis,
                 "otherTargets": this.#otherTargets
@@ -180,7 +181,8 @@ export default class Analyzer {
 
         await this.#updateAnalysisCache();
         var lastAnalysis = {
-            "domain": this.#inputDomain,
+            "inputDomain": this.#inputDomain,
+            "visitedDomain": this.#visitedDomain,
             "target": this.#target,
             "analysis": this.#analysis,
             "otherTargets": this.#otherTargets

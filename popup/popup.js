@@ -18,7 +18,8 @@ document.addEventListener("DOMContentLoaded", function() {
             var lastAnalysis = await utils.getFromStorage("lastAnalysis", "local");
             console.log(lastAnalysis);
             var analyzer = new Analyzer();
-            analyzer.inputDomain = lastAnalysis.domain;
+            analyzer.inputDomain = lastAnalysis.inputDomain;
+            analyzer.visitedDomain = lastAnalysis.visitedDomain;
             await analyzer.removeInputDomainFromAnalysisCache();
             await analyzer.analyze();
             analyzer.showAnalysis();
