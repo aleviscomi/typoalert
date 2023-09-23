@@ -73,13 +73,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
       if (domainRegex.test(newDomain)) {
         var analyzer = new Analyzer();
-        analyzer.domain = newDomain;
-        if (! await analyzer.isDomainInAnalysisCache()) {
-          await analyzer.analyze();
-        }
-        await analyzer.updateAnalysisCache();
+        analyzer.inputDomain = newDomain;
+        await analyzer.analyze();
 
-        const analysis = analyzer.finalAnalysis;
+        const analysis = analyzer.analysis;
         if (analysis >= Result.ProbablyTypo) {
           var userConfirm;
           switch(analysis) {
@@ -118,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const userDomains = result.userDomains || [];
             userDomains.push(newDomain);
             chrome.storage.sync.set({ userDomains: userDomains });
-            await analyzer.removeDomainFromAnalysisCache();
+            await analyzer.removeInputDomainFromAnalysisCache();
           });
         } else {
           errorBanner.textContent = 'Domain already exists.';

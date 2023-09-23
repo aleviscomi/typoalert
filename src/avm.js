@@ -24,8 +24,8 @@ async function evaluateDymAlert(ctarget, dym) {
 }   // evaluateDym
 
 
-async function evaluatePhishingAlert(inputDomainHtml, ctargetHtml, phishingDetector) {
-    phishingDetector.evaluate(inputDomainHtml, ctargetHtml);
+async function evaluatePhishingAlert(visitedDomainHtml, ctargetHtml, phishingDetector) {
+    phishingDetector.evaluate(visitedDomainHtml, ctargetHtml);
 
     if (phishingDetector.similarityValue >= 33) {
         return 1;
@@ -36,13 +36,16 @@ async function evaluatePhishingAlert(inputDomainHtml, ctargetHtml, phishingDetec
 }   // evaluatePhishingAlert
 
 
-async function evaluateParkingAlert(inputDomainHtml) {
+async function evaluateParkingAlert(visitedDomainHtml) {
+    if (! visitedDomainHtml) {
+        return 0;
+    }
     const keyphrases = await utils.getFromStorage("keyphrasesDomainParking", "local");
 
     var numKeyphrases = 0;
     var keyphrase;
     for (keyphrase of keyphrases) {
-        if (inputDomainHtml.toLowerCase().includes(keyphrase)) {
+        if (visitedDomainHtml.toLowerCase().includes(keyphrase)) {
             numKeyphrases++;
         }
     }
@@ -55,27 +58,28 @@ async function evaluateParkingAlert(inputDomainHtml) {
 
 }   // evaluateParkedAlert
 
-export async function analyzeAlerts(inputDomain, ctargets, searcher, phishingDetector) {
-    var ctargetsAnalysis = {};
-    var worstAnalysis = Number.NEGATIVE_INFINITY;
+export async function analyzeAlerts(inputDomain, visitedDomain, ctargets, searcher, phishingDetector) {
+    var target;                                 // ctarget with worst alert value
+    var analysis = Number.NEGATIVE_INFINITY;    // target's alert value
+    var otherTargets = [];                            // other ctargets with less alert value
 
     // do a search on web
     await searcher.search(inputDomain);
-    
-    // get input domain html
-    var inputDomainHtml;
+
+    // get visited domain html
+    var visitedDomainHtml;
     try {
-        inputDomainHtml = await utils.getHtmlBodyFromActiveTab();
+        visitedDomainHtml = await utils.getHtmlBodyFromActiveTab();
     } catch(error) {
         try {
-            inputDomainHtml = await utils.getHtmlBodyFromUrl(`https://${inputDomain}`);
+            visitedDomainHtml = await utils.getHtmlBodyFromUrl(`https://${visitedDomain}`);
         } catch(error) {
-            inputDomainHtml = await utils.getHtmlBodyFromUrl(`http://${inputDomain}`);
+            visitedDomainHtml = await utils.getHtmlBodyFromUrl(`http://${visitedDomain}`);
         }
     }
 
     // Parking Alert
-    const parkingAlert = await evaluateParkingAlert(inputDomainHtml);
+    const parkingAlert = await evaluateParkingAlert(visitedDomainHtml);
 
     var ctarget;
     for (ctarget of ctargets) {
@@ -90,27 +94,32 @@ export async function analyzeAlerts(inputDomain, ctargets, searcher, phishingDet
             ctargetHtml = await utils.getHtmlBodyFromUrl(`http://${ctarget}`);
         }
 
-        var phishingAlert = await evaluatePhishingAlert(inputDomainHtml, ctargetHtml, phishingDetector);
+        var phishingAlert = await evaluatePhishingAlert(visitedDomainHtml, ctargetHtml, phishingDetector);
 
         var alertValue = top10Alert + dymAlert + phishingAlert + parkingAlert;
+        console.log("top10Alert: " + top10Alert + ", dymAlert: " + dymAlert + ", phishingAlert: " + phishingAlert + ", parkingAlert: " + parkingAlert)
 
+        var ctargetAlertValue;
         if (alertValue == -1) {
-            ctargetsAnalysis[ctarget] = Result.ProbablyNotTypo;
+            ctargetAlertValue = Result.ProbablyNotTypo;
         } else if (alertValue == 0) {
-            ctargetsAnalysis[ctarget] = Result.ProbablyTypo;
+            ctargetAlertValue = Result.ProbablyTypo;
         } else {    // alertValue >= 1
             if (phishingAlert == 1) {
-                ctargetsAnalysis[ctarget] = Result.TypoPhishing;
+                ctargetAlertValue = Result.TypoPhishing;
             } else {
-                ctargetsAnalysis[ctarget] = Result.Typo;
+                ctargetAlertValue = Result.Typo;
             }
         }
 
-        if (ctargetsAnalysis[ctarget] > worstAnalysis) {
-            worstAnalysis = ctargetsAnalysis[ctarget];
+        if (ctargetAlertValue > analysis) {
+            analysis = ctargetAlertValue;
+            target = ctarget;
         }
     }
 
-    return { "worstAnalysis": worstAnalysis, "ctargetsAnalysis": ctargetsAnalysis };
+    otherTargets = ctargets.filter(ctarget => ctarget !== target);
+    
+    return { "target": target, "analysis": analysis, "otherTargets": otherTargets };
 
 }   // getAlert

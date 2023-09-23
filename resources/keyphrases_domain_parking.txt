@@ -1,9 +1,12 @@
 dominio in vendita
 questo dominio è in vendita
 compra questo dominio
+acquista questo dominio
 puoi comprare questo dominio
+informati su questo dominio
 links correlati
 link correlati
+ricerche correlate
 links sponsorizzati
 link sponsorizzati
 sei interessato a questo dominio
@@ -21,4 +24,5 @@ you can buy this domain
 is this your domain
 this is your domain
 buy or rent this domain
-window.park
+domainpark
+this domain may be for sale

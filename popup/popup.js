@@ -1,3 +1,4 @@
+import * as utils from "../src/utils.js"
 import Analyzer from "../../src/analyzer.js";
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -14,24 +15,13 @@ document.addEventListener("DOMContentLoaded", function() {
     var redoButton = document.getElementById("redo-button");
     if (redoButton) {
         redoButton.addEventListener("click", async function() {
-            var domain = await new Promise((resolve) => {
-                chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                    var url = tabs[0].url;
-                    var domain = new URL(url).hostname.replace(/^www\./, "");
-                    resolve(domain);
-                });
-            });
-            
+            var lastAnalysis = await utils.getFromStorage("lastAnalysis", "local");
+            console.log(lastAnalysis);
             var analyzer = new Analyzer();
-            analyzer.domain = domain;
-    
-            await analyzer.removeDomainFromAnalysisCache();
-    
+            analyzer.inputDomain = lastAnalysis.domain;
+            await analyzer.removeInputDomainFromAnalysisCache();
             await analyzer.analyze();
             analyzer.showAnalysis();
-    
-            await analyzer.updateAnalysisCache();
-
             alert("Analysis Redone");
         });
     }

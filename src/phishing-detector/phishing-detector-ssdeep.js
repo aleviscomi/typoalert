@@ -175,6 +175,9 @@ export default class PhishingDetectorSsdeep extends PhishingDetector {
     }
 
     digest(data) {
+        if (!data) {
+            return "";
+        }
         if (typeof data === 'string') {
             data = this.#toUTF8Array(data);
         }
@@ -182,6 +185,9 @@ export default class PhishingDetectorSsdeep extends PhishingDetector {
     }
   
     similarity(d1, d2) {
+        if (d1 === "" || d2 === "") {
+            return 0;
+        }
         var b1 = this.#B64.indexOf(d1.charAt(0));
         var b2 = this.#B64.indexOf(d2.charAt(0));
         if (b1 > b2) return this.similarity(d2, d1);

@@ -110,7 +110,7 @@ export function setGrey() {
     });
 }
 
-export async function showAlert(warningLevel, msg, color) {
+export function showAlert(warningLevel, msg, color) {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const tab = tabs[0];
         if (tab) {
