@@ -25,7 +25,9 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
       inputUrl = new URL(details.url);
       var inputDomain = inputUrl.hostname.replace(/^www\./, "");
       if (await utils.isDomainInBlacklist(inputDomain)) {
-        chrome.tabs.update(details.tabId, { url: "blocked/malware/blocked.html" });
+        chrome.tabs.create({ openerTabId: details.tabId, url: "blocked/redirect/blocked.html" });
+        chrome.tabs.remove(details.tabId, function() { });
+        // chrome.tabs.update(details.tabId, { url: "blocked/malware/blocked.html" });
         uiController.setDarkRedMalware();
       }
     }
@@ -36,16 +38,19 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
 
 chrome.webNavigation.onCommitted.addListener(async (details) => {
   try {
-    if (details.transitionQualifiers.includes("client_redirect") && analyzer.analysis >= Result.Typo) {
-      analyzer.inputDomain = "";
-      analyzer.visitedDomain = "";
-      chrome.tabs.update(details.tabId, { url: "blocked/redirect/blocked.html" });
+    if (  (!details.url.startsWith("chrome-extension://") && !details.url.includes("blocked/redirect/blocked.html"))
+          && (details.transitionQualifiers.includes("client_redirect") || (details.transitionQualifiers.length == 0 && details.transitionType == "link")) 
+          && analyzer.analysis >= Result.ProbablyTypo) {
+
+      chrome.tabs.create({ openerTabId: details.tabId, url: "blocked/redirect/blocked.html" });
+      chrome.tabs.remove(details.tabId, function() { });
+      // chrome.tabs.update(details.tabId, { url: "blocked/redirect/blocked.html" });
       return;
     }
 
     if (details.documentLifecycle === "active" && details.frameId === 0) {
       var visitedUrl = new URL(details.url);
-      main(inputUrl, visitedUrl);
+      await main(inputUrl, visitedUrl);
     }
   } catch(error) {
     console.log(error);
@@ -65,17 +70,19 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 // FUNCTIONS
 
 async function main(inputUrl, visitedUrl) {
-  if (visitedUrl.toString().includes("chrome-extension://") && visitedUrl.toString().includes("blocked/malware/blocked.html")) {
-    uiController.setDarkRedMalware();
-  }
-  else if (visitedUrl.toString().includes("chrome-extension://") && visitedUrl.toString().includes("blocked/redirect/blocked.html")) {
-    uiController.setRed();
-  }
-  else if (! visitedUrl.toString().startsWith("http")) {
-    uiController.setDefault();
-  } else {
+  if (visitedUrl.toString().includes("chrome-extension://") || visitedUrl.toString().includes("chrome://")) {
+    if (visitedUrl.toString().includes("blocked/malware/blocked.html")) {
+      uiController.setDarkRedMalware();
+    } else if (visitedUrl.toString().includes("blocked/redirect/blocked.html")) {
+      uiController.setRed();
+    } else {
+      uiController.setDefault();
+    }
+  } else if (visitedUrl.toString().startsWith("http")) {
     var inputDomain = inputUrl.hostname.replace(/^www\./, "");
     var visitedDomain = visitedUrl.hostname.replace(/^www\./, "");
+
+    // console.log("input: " + inputDomain, "visited: " + visitedDomain);
 
     analyzer.inputDomain = inputDomain;
     analyzer.visitedDomain = visitedDomain;

@@ -50,11 +50,17 @@ export default class GoogleSearcher extends Searcher {
             else if (data.includes("Risultati relativi a")) {
                 this.#dym = data.split(/Risultati relativi a.*?q=/)[1].split("&amp")[0];
             }
+            else if (data.includes("Sono inclusi i risultati per")) {
+                this.#dym = data.split(/Sono inclusi i risultati per.*?q=/)[1].split("&amp")[0];
+            }
             else if (data.includes("Did you mean:")) {
                 this.#dym = data.split(/Did you mean:.*?q=/)[1].split("&amp")[0];
             }
             else if (data.includes("Showing results for")) {
                 this.#dym = data.split(/Showing results for.*?q=/)[1].split("&amp")[0];
+            }
+            else if (data.includes("Including results for")) {
+                this.#dym = data.split(/Including results for.*?q=/)[1].split("&amp")[0];
             }
 
         } catch (error) {

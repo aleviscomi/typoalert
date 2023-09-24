@@ -204,7 +204,7 @@ export default class Analyzer {
             case Result.ProbablyNotTypo: {
                 uiController.setGreenYellow();
                 
-                const notificationOptions = { type: "basic", iconUrl: "images/info.png", title: "TypoAlert Note", message: "Did you mean another domain? Open extension popup for more info." };
+                const notificationOptions = { type: "basic", iconUrl: "/images/info.png", title: "TypoAlert Note", message: "Did you mean another domain? Open extension popup for more info." };
                 chrome.notifications.create("typoAlertNotification", notificationOptions);
                 break;
             }

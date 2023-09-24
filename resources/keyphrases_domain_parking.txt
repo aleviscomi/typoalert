@@ -17,6 +17,7 @@ this domain is for sale
 buy this domain
 you can purchase this domain
 related links
+related searches
 sponsored linkage
 sponsored links
 interested in this domain
@@ -25,4 +26,5 @@ is this your domain
 this is your domain
 buy or rent this domain
 domainpark
+<script>window.park
 this domain may be for sale
