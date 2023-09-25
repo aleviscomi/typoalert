@@ -97,7 +97,7 @@ export async function analyzeAlerts(inputDomain, visitedDomain, ctargets, search
         var phishingAlert = await evaluatePhishingAlert(visitedDomainHtml, ctargetHtml, phishingDetector);
 
         var alertValue = top10Alert + dymAlert + phishingAlert + parkingAlert;
-        // console.log("top10Alert: " + top10Alert + ", dymAlert: " + dymAlert + ", phishingAlert: " + phishingAlert + ", parkingAlert: " + parkingAlert)
+        console.log("top10Alert: " + top10Alert + ", dymAlert: " + dymAlert + ", phishingAlert: " + phishingAlert + ", parkingAlert: " + parkingAlert)
 
         var ctargetAlertValue;
         if (alertValue == -1) {

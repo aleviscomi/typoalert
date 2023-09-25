@@ -14,6 +14,8 @@ chrome.runtime.onInstalled.addListener(() => {
 
   // load keyphrases for domain parking analysis
   utils.loadKeyphrasesDomainParking();
+
+  chrome.storage.local.set({ "popupClick": false });
 });
 
 var inputUrl = "";
@@ -38,7 +40,10 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
 
 chrome.webNavigation.onCommitted.addListener(async (details) => {
   try {
-    if (  (!details.url.startsWith("chrome-extension://") && !details.url.includes("blocked/redirect/blocked.html"))
+    var popupClick = await utils.getFromStorage("popupClick", "local");
+    if (popupClick === true) {
+      chrome.storage.local.set({ "popupClick": false });
+    } else if (  (!details.url.startsWith("chrome-extension://") && !details.url.includes("blocked/redirect/blocked.html"))
           && (details.transitionQualifiers.includes("client_redirect") || (details.transitionQualifiers.length == 0 && details.transitionType == "link")) 
           && analyzer.analysis >= Result.ProbablyTypo) {
 
@@ -82,7 +87,7 @@ async function main(inputUrl, visitedUrl) {
     var inputDomain = inputUrl.hostname.replace(/^www\./, "");
     var visitedDomain = visitedUrl.hostname.replace(/^www\./, "");
 
-    // console.log("input: " + inputDomain, "visited: " + visitedDomain);
+    console.log("input: " + inputDomain, "visited: " + visitedDomain);
 
     analyzer.inputDomain = inputDomain;
     analyzer.visitedDomain = visitedDomain;
