@@ -27,7 +27,17 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
       inputUrl = new URL(details.url);
       var inputDomain = inputUrl.hostname.replace(/^www\./, "");
       if (await utils.isDomainInBlacklist(inputDomain)) {
-        chrome.tabs.create({ openerTabId: details.tabId, url: "blocked/redirect/blocked.html" });
+        let date = new Date();
+        var lastAnalysis = {
+            "inputDomain": inputDomain,
+            "visitedDomain": "",
+            "target": "",
+            "analysis": Result.TypoMalware,
+            "otherTargets": "",
+            "dateLastAnalysis": `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}`
+        }
+        chrome.storage.local.set({ "lastAnalysis": lastAnalysis });
+        chrome.tabs.create({ openerTabId: details.tabId, url: "blocked/malware/blocked.html" });
         chrome.tabs.remove(details.tabId, function() { });
         // chrome.tabs.update(details.tabId, { url: "blocked/malware/blocked.html" });
         uiController.setDarkRedMalware();

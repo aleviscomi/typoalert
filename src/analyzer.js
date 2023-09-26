@@ -108,11 +108,13 @@ export default class Analyzer {
                 // remove first element (the oldest)
                 cache.splice(0, 1)[0];
             }
+            let date = new Date();
             cache.push({
                 "domain": this.#inputDomain,
                 "target": this.#target,
                 "analysis": this.#analysis,
-                "otherTargets": this.#otherTargets
+                "otherTargets": this.#otherTargets,
+                "dateLastAnalysis": `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}`
             });
         }
         
@@ -138,7 +140,8 @@ export default class Analyzer {
                 "visitedDomain": this.#visitedDomain,
                 "target": this.#target,
                 "analysis": this.#analysis,
-                "otherTargets": this.#otherTargets
+                "otherTargets": this.#otherTargets,
+                "dateLastAnalysis": cache[indexDomain].dateLastAnalysis
             }
             chrome.storage.local.set({ "lastAnalysis": lastAnalysis });
             return;
@@ -180,12 +183,14 @@ export default class Analyzer {
         }
 
         await this.#updateAnalysisCache();
+        let date = new Date();
         var lastAnalysis = {
             "inputDomain": this.#inputDomain,
             "visitedDomain": this.#visitedDomain,
             "target": this.#target,
             "analysis": this.#analysis,
-            "otherTargets": this.#otherTargets
+            "otherTargets": this.#otherTargets,
+            "dateLastAnalysis": `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}`
         }
         chrome.storage.local.set({ "lastAnalysis": lastAnalysis });
     

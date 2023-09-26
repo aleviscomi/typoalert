@@ -1,14 +1,25 @@
 chrome.storage.local.get('lastAnalysis', function(result) {
     var analysis = result.lastAnalysis;
     const targetSite = document.getElementById('target-site');
+    const searchedSite = document.getElementById('searched-site');
     const others = document.getElementById('others');
+    const dateLastAnalysis = document.getElementById('date-last-analysis');
 
     if(analysis) {
-        if (analysis.target !== "") {
-            const targetSiteLink = `<a href="https://www.${analysis.target}" id="site-link">${analysis.target}</a>`;
-            targetSite.innerHTML += `${targetSiteLink}`;
-        } else {
-            targetSite.innerHTML += 'No target site found.';
+        if(searchedSite) {
+            searchedSite.innerHTML += `<i>${analysis.inputDomain}</i>`;
+        }
+
+        if(dateLastAnalysis) {
+            dateLastAnalysis.innerHTML += `<i>${analysis.dateLastAnalysis}</i>`;
+        }
+        if(targetSite) {
+            if (analysis.target !== "") {
+                const targetSiteLink = `<a href="https://www.${analysis.target}" id="site-link">${analysis.target}</a>`;
+                targetSite.innerHTML += `${targetSiteLink}`;
+            } else {
+                targetSite.innerHTML += 'No target site found.';
+            }
         }
     }
     if (others) {

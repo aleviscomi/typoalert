@@ -5,6 +5,7 @@ const Result = {
     ProbablyTypo: 3,        // yellow
     Typo: 4,                // red
     TypoPhishing: 5,        // darkRed
+    TypoMalware: 6,         // darkRed
 }
 
 export default Result;
