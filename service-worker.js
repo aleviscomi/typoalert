@@ -97,7 +97,7 @@ async function main(inputUrl, visitedUrl) {
     var inputDomain = inputUrl.hostname.replace(/^www\./, "");
     var visitedDomain = visitedUrl.hostname.replace(/^www\./, "");
 
-    console.log("input: " + inputDomain, "visited: " + visitedDomain);
+    // console.log("input: " + inputDomain, "visited: " + visitedDomain);
 
     analyzer.inputDomain = inputDomain;
     analyzer.visitedDomain = visitedDomain;

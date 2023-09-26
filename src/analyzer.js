@@ -5,6 +5,7 @@ import * as uiController from "/src/ui-controller.js"
 import Result from "./result.js"
 
 import GoogleSearcher from "./searcher/google-searcher.js"
+import BingSearcher from "./searcher/bing-searcher.js"
 import PhishingDetectorSsdeep from "./phishing-detector/phishing-detector-ssdeep.js"
 
 export default class Analyzer {
@@ -17,6 +18,9 @@ export default class Analyzer {
     #analysis;  // target's alert value
     #otherTargets;    // other ctargets with less alert value
 
+    #searcher;
+    #phishingDetector;
+
     constructor() {
         this.#ANALYSIS_CACHE_SIZE = 100;
 
@@ -26,6 +30,9 @@ export default class Analyzer {
         this.#target = "";
         this.#analysis = Result.Unknown;
         this.#otherTargets = [];
+
+        this.#searcher = new GoogleSearcher();
+        this.#phishingDetector = new PhishingDetectorSsdeep();
     }
   
     set inputDomain(inputDomain) {
@@ -37,6 +44,14 @@ export default class Analyzer {
   
     set visitedDomain(visitedDomain) {
         this.#visitedDomain = visitedDomain;
+    }
+  
+    set searcher(searcher) {
+        this.#searcher = searcher;
+    }
+  
+    set phishingDetector(phishingDetector) {
+        this.#phishingDetector = phishingDetector;
     }
 
     get inputDomain() {
@@ -59,17 +74,25 @@ export default class Analyzer {
         return this.#otherTargets;
     }
   
-    async #getDomainsList() {
+    get searcher() {
+        return this.#searcher;
+    }
+  
+    get phishingDetector() {
+        return this.#phishingDetector;
+    }
+  
+    async #getVerifiedDomains() {
         // get top domains list
         var topDomains = await utils.getFromStorage("topDomains", "local");
     
         // get user domains list
         var userDomains = await utils.getFromStorage("userDomains", "sync");
     
-        var domainsList = topDomains.concat(userDomains);
+        var verifiedDomains = topDomains.concat(userDomains);
     
-        return domainsList;
-    }   // getDomainsList
+        return verifiedDomains;
+    }   // getVerifiedDomains
 
     async #isInputDomainInAnalysisCache() {
         // get cache of already analyzed domains
@@ -151,31 +174,31 @@ export default class Analyzer {
         this.#analysis = Result.Unknown;
         this.#otherTargets = [];
 
-        var domainsList = await this.#getDomainsList();
+        var verifiedDomains = await this.#getVerifiedDomains();
     
         // check if inputDomain is:
         // - in domains list;
         // - a typo (DL == 1) of some top domain
         var ctargets = [];
-        var domain;
-        for (domain of domainsList) {
+        var verifiedDomain;
+        for (verifiedDomain of verifiedDomains) {
             // if inputDomain is in domains list (DL = 0) then it is definitely not typo
-            if (domain === this.#inputDomain || domain === this.#visitedDomain) {
+            if (verifiedDomain === this.#inputDomain || verifiedDomain === this.#visitedDomain) {
                 this.#analysis = Result.NotTypo;
                 break;
             }
     
             // calculate DL between currentTopDomain and inputDomain
-            var dlDistance = ecm.damerauLevenshteinDistance(domain, this.#inputDomain);
+            var dlDistance = ecm.damerauLevenshteinDistance(verifiedDomain, this.#inputDomain);
             if (dlDistance === 1) {
                 this.#analysis = Result.ProbablyTypo;
-                ctargets.push(domain);
+                ctargets.push(verifiedDomain);
             }
         }
     
         //check alert
         if (this.#analysis === Result.ProbablyTypo) {
-            var alertAnalysis = await avm.analyzeAlerts(this.#inputDomain, this.#visitedDomain, ctargets, new GoogleSearcher(), new PhishingDetectorSsdeep());
+            var alertAnalysis = await avm.analyzeAlerts(this.#inputDomain, this.#visitedDomain, ctargets, this.#searcher, this.#phishingDetector);
             
             this.#target = alertAnalysis["target"]; 
             this.#analysis = alertAnalysis["analysis"]; 

@@ -28,8 +28,8 @@ export default class BingSearcher extends Searcher {
         
             // get URLs of results
             this.#searchResults = data.webPages.value.map(item => {
-              let url = new URL(item.displayUrl);
-              return url.hostname.replace(/^www\./, '');
+                let url = new URL(item.url);
+                return url.hostname.replace(/^www\./, '');
             });
         
             // get DYM

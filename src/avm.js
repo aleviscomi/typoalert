@@ -61,7 +61,7 @@ async function evaluateParkingAlert(visitedDomainHtml) {
 export async function analyzeAlerts(inputDomain, visitedDomain, ctargets, searcher, phishingDetector) {
     var target;                                 // ctarget with worst alert value
     var analysis = Number.NEGATIVE_INFINITY;    // target's alert value
-    var otherTargets = [];                            // other ctargets with less alert value
+    var otherTargets = [];                      // other ctargets with less alert value
 
     // do a search on web
     await searcher.search(inputDomain);
@@ -97,23 +97,23 @@ export async function analyzeAlerts(inputDomain, visitedDomain, ctargets, search
         var phishingAlert = await evaluatePhishingAlert(visitedDomainHtml, ctargetHtml, phishingDetector);
 
         var alertValue = top10Alert + dymAlert + phishingAlert + parkingAlert;
-        console.log("top10Alert: " + top10Alert + ", dymAlert: " + dymAlert + ", phishingAlert: " + phishingAlert + ", parkingAlert: " + parkingAlert)
+        // console.log("top10Alert: " + top10Alert + ", dymAlert: " + dymAlert + ", phishingAlert: " + phishingAlert + ", parkingAlert: " + parkingAlert)
 
-        var ctargetAlertValue;
+        var currentAnalysis;
         if (alertValue == -1) {
-            ctargetAlertValue = Result.ProbablyNotTypo;
+            currentAnalysis = Result.ProbablyNotTypo;
         } else if (alertValue == 0) {
-            ctargetAlertValue = Result.ProbablyTypo;
+            currentAnalysis = Result.ProbablyTypo;
         } else {    // alertValue >= 1
             if (phishingAlert == 1) {
-                ctargetAlertValue = Result.TypoPhishing;
+                currentAnalysis = Result.TypoPhishing;
             } else {
-                ctargetAlertValue = Result.Typo;
+                currentAnalysis = Result.Typo;
             }
         }
 
-        if (ctargetAlertValue > analysis) {
-            analysis = ctargetAlertValue;
+        if (currentAnalysis > analysis) {
+            analysis = currentAnalysis;
             target = ctarget;
         }
     }
