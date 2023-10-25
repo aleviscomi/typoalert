@@ -68,9 +68,14 @@ export async function getHtmlBodyFromActiveTab() {
     return html;
 }
 
-export async function getHtmlBodyFromUrl(url) {
+export async function getHtmlBodyFromUrl(url, CLIfetch) {
     try {
-        const response = await fetch(url);
+        var response;
+        if(CLIfetch != null) {
+            response = await CLIfetch(url);
+        } else {
+            response = await fetch(url);
+        }
         const data = await response.text();
         const result = "<body" + data.split("<body")[1].split("</body>")[0] + "</body>";
         return result;

@@ -32,7 +32,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
             "inputDomain": inputDomain,
             "visitedDomain": "",
             "target": "",
-            "analysis": Result.TypoMalware,
+            "analysis": Result.Malware,
             "otherTargets": "",
             "dateLastAnalysis": `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}`
         }

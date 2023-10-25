@@ -14,7 +14,7 @@ export default class PhishingDetectorSsdeep extends PhishingDetector {
         this.#B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
     }
 
-    #toUTF8Array (str) {
+    toUTF8Array(str) {
         var out = [], p = 0;
         for (var i = 0; i < str.length; i++) {
         var c = str.charCodeAt(i);
@@ -41,7 +41,7 @@ export default class PhishingDetectorSsdeep extends PhishingDetector {
         return out;
     }
 
-    #safe_multiply(x, y) {
+    safe_multiply(x, y) {
         /*
             a = a00 + a16
             b = b00 + b16
@@ -72,11 +72,11 @@ export default class PhishingDetectorSsdeep extends PhishingDetector {
         return (xmsw << 16) | (xlsw & 0xFFFF)
     }
 
-    #fnv (h, c) {
-        return (this.#safe_multiply(h,this.#HASH_PRIME) ^ c)>>>0;
+    fnv(h, c) {
+        return (this.safe_multiply(h,this.#HASH_PRIME) ^ c)>>>0;
     }
 
-    #levenshtein (str1, str2) {
+    levenshtein(str1, str2) {
         // base cases
         if (str1 === str2) return 0;
         if (str1.length === 0) return str2.length;
@@ -121,7 +121,7 @@ export default class PhishingDetectorSsdeep extends PhishingDetector {
         return nextCol;
     }
 
-    #piecewiseHash (bytes, triggerValue) {
+    piecewiseHash(bytes, triggerValue) {
         var signatures = ['','', triggerValue];
         if (bytes.length === 0) {
             return signatures;
@@ -133,8 +133,8 @@ export default class PhishingDetectorSsdeep extends PhishingDetector {
         for (var i = 0, len = bytes.length; i < len; i++) {
             var thisByte = bytes[i];
     
-            h1 = this.#fnv(h1, thisByte);
-            h2 = this.#fnv(h2, thisByte);
+            h1 = this.fnv(h1, thisByte);
+            h2 = this.fnv(h2, thisByte);
     
             rh.update(thisByte);
     
@@ -152,7 +152,7 @@ export default class PhishingDetectorSsdeep extends PhishingDetector {
         return signatures;
     }
 
-    #digestBytes(bytes) {
+    digestBytes(bytes) {
         var bi = 3;
         while (bi*this.#MAX_LENGTH < bytes.length) {
             bi *= 2;
@@ -160,7 +160,7 @@ export default class PhishingDetectorSsdeep extends PhishingDetector {
         
         var signatures;
         do {
-            signatures = this.#piecewiseHash(bytes, bi);
+            signatures = this.piecewiseHash(bytes, bi);
             
             bi = ~~(bi / 2);
         } while (bi > 3 && signatures[0].length < this.#MAX_LENGTH/2);
@@ -168,8 +168,8 @@ export default class PhishingDetectorSsdeep extends PhishingDetector {
         return signatures[2] + ':' + signatures[0] + ':' + signatures[1];
     }
 
-    #matchScore (s1, s2) {
-        var e = this.#levenshtein(s1, s2);
+    matchScore(s1, s2) {
+        var e = this.levenshtein(s1, s2);
         var r = 1 - e/Math.max(s1.length ,s2.length);
         return r * 100;
     }
@@ -179,9 +179,9 @@ export default class PhishingDetectorSsdeep extends PhishingDetector {
             return "";
         }
         if (typeof data === 'string') {
-            data = this.#toUTF8Array(data);
+            data = this.toUTF8Array(data);
         }
-        return this.#digestBytes(data);
+        return this.digestBytes(data);
     }
   
     similarity(d1, d2) {
@@ -195,9 +195,9 @@ export default class PhishingDetectorSsdeep extends PhishingDetector {
         if (Math.abs(b1-b2) > 1) {
             return 0;
         } else if (b1 === b2) {
-            return this.#matchScore(d1.split(':')[1], d2.split(':')[1]);
+            return this.matchScore(d1.split(':')[1], d2.split(':')[1]);
         } else {
-            return this.#matchScore(d1.split(':')[2], d2.split(':')[1]);
+            return this.matchScore(d1.split(':')[2], d2.split(':')[1]);
         }
     }
 }
@@ -218,20 +218,20 @@ class RollHash {
         this.#n = 0;
     }
 
-    #safe_add(x, y) {
+    safe_add(x, y) {
         var lsw = (x & 0xFFFF) + (y & 0xFFFF)
         var msw = (x >> 16) + (y >> 16) + (lsw >> 16)
         return (msw << 16) | (lsw & 0xFFFF)
     }
 
     update(c) {
-        this.#h2 = this.#safe_add(this.#h2, -this.#h1);
+        this.#h2 = this.safe_add(this.#h2, -this.#h1);
         var mut = (this.#ROLLING_WINDOW * c);
-        this.#h2 = this.#safe_add(this.#h2, mut) >>> 0;
-        this.#h1 = this.#safe_add(this.#h1, c);
+        this.#h2 = this.safe_add(this.#h2, mut) >>> 0;
+        this.#h1 = this.safe_add(this.#h1, c);
 
         var val = (this.rolling_window[this.#n % this.#ROLLING_WINDOW] || 0);
-        this.#h1 = this.#safe_add(this.#h1, -val) >>> 0;
+        this.#h1 = this.safe_add(this.#h1, -val) >>> 0;
         this.rolling_window[this.#n % this.#ROLLING_WINDOW] = c;
         this.#n++;
 

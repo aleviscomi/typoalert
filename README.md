@@ -32,3 +32,26 @@ To install TypoAlert, follow these steps:
 3. Activate developer mode by turning on the switch on the top right of the page that says "Developer mode".
 
 4. Load unpacked extension by clicking on the button on the top left of the page that says "Load upacked". Then select the TypoAlert folder.
+
+
+## CLI Usage
+
+TypoAlert is also provided as a command-line tool (**Node.js required**).
+
+To analyze a single domain:
+```bash
+node typoalert.mjs -o <domain-to-analyze>
+```
+
+To analyze multiple domains:
+```bash
+node typoalert.mjs -m <file-containing-the-domains-to-analyze>
+```
+
+The file must contain the domains separated by a line break. 
+For example:
+
+google.com<br>
+amazon.com<br>
+youtube.com<br>
+...

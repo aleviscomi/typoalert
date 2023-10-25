@@ -1,0 +1,23 @@
+{
+  "type": "module",
+  "name": "typoalert",
+  "version": "1.0.0",
+  "description": "Detect typosquatted domains",
+  "main": "typoalert.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aleviscomi/TypoAlert.git"
+  },
+  "author": "Alessandro Viscomi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aleviscomi/TypoAlert/issues"
+  },
+  "homepage": "https://github.com/aleviscomi/TypoAlert#readme",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}

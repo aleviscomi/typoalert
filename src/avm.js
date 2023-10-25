@@ -36,11 +36,10 @@ async function evaluatePhishingAlert(visitedDomainHtml, ctargetHtml, phishingDet
 }   // evaluatePhishingAlert
 
 
-async function evaluateParkingAlert(visitedDomainHtml) {
+async function evaluateParkingAlert(visitedDomainHtml, keyphrases) {
     if (! visitedDomainHtml) {
         return 0;
     }
-    const keyphrases = await utils.getFromStorage("keyphrasesDomainParking", "local");
 
     var numKeyphrases = 0;
     var keyphrase;
@@ -58,13 +57,13 @@ async function evaluateParkingAlert(visitedDomainHtml) {
 
 }   // evaluateParkedAlert
 
-export async function analyzeAlerts(inputDomain, visitedDomain, ctargets, searcher, phishingDetector) {
+export async function analyzeAlerts(inputDomain, visitedDomain, ctargets, searcher, phishingDetector, keyphrases, CLIfetch) {
     var target;                                 // ctarget with worst alert value
     var analysis = Number.NEGATIVE_INFINITY;    // target's alert value
     var otherTargets = [];                      // other ctargets with less alert value
 
     // do a search on web
-    await searcher.search(inputDomain);
+    await searcher.search(inputDomain, CLIfetch);
 
     // get visited domain html
     var visitedDomainHtml;
@@ -72,32 +71,31 @@ export async function analyzeAlerts(inputDomain, visitedDomain, ctargets, search
         visitedDomainHtml = await utils.getHtmlBodyFromActiveTab();
     } catch(error) {
         try {
-            visitedDomainHtml = await utils.getHtmlBodyFromUrl(`https://${visitedDomain}`);
+            visitedDomainHtml = await utils.getHtmlBodyFromUrl(`https://${visitedDomain}`, CLIfetch);
         } catch(error) {
-            visitedDomainHtml = await utils.getHtmlBodyFromUrl(`http://${visitedDomain}`);
+            visitedDomainHtml = await utils.getHtmlBodyFromUrl(`http://${visitedDomain}`, CLIfetch);
         }
     }
 
     // Parking Alert
-    const parkingAlert = await evaluateParkingAlert(visitedDomainHtml);
+    const parkingAlert = await evaluateParkingAlert(visitedDomainHtml, keyphrases);
 
     var ctarget;
     for (ctarget of ctargets) {
         var top10Alert = await evaluateTop10Alert(inputDomain, ctarget, searcher.searchResults);
         var dymAlert = await evaluateDymAlert(ctarget, searcher.dym);
-
         // get ctarget html
         var ctargetHtml;
         try {
-            ctargetHtml = await utils.getHtmlBodyFromUrl(`https://${ctarget}`);
+            ctargetHtml = await utils.getHtmlBodyFromUrl(`https://${ctarget}`, CLIfetch);
         } catch(error) {
-            ctargetHtml = await utils.getHtmlBodyFromUrl(`http://${ctarget}`);
+            ctargetHtml = await utils.getHtmlBodyFromUrl(`http://${ctarget}`, CLIfetch);
         }
 
         var phishingAlert = await evaluatePhishingAlert(visitedDomainHtml, ctargetHtml, phishingDetector);
 
         var alertValue = top10Alert + dymAlert + phishingAlert + parkingAlert;
-        // console.log("top10Alert: " + top10Alert + ", dymAlert: " + dymAlert + ", phishingAlert: " + phishingAlert + ", parkingAlert: " + parkingAlert)
+        console.log("top10Alert: " + top10Alert + ", dymAlert: " + dymAlert + ", phishingAlert: " + phishingAlert + ", parkingAlert: " + parkingAlert)
 
         var currentAnalysis;
         if (alertValue == -1) {

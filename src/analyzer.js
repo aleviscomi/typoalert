@@ -1,7 +1,7 @@
 import * as utils from "./utils.js"
 import * as ecm from "./ecm.js"
 import * as avm from "./avm.js"
-import * as uiController from "/src/ui-controller.js"
+import * as uiController from "./ui-controller.js"
 import Result from "./result.js"
 
 import GoogleSearcher from "./searcher/google-searcher.js"
@@ -21,7 +21,12 @@ export default class Analyzer {
     #searcher;
     #phishingDetector;
 
-    constructor() {
+    #commandLine;
+    #verifiedDomains;
+    #keyphrases;
+    #CLIfetch;
+
+    constructor(commandLine = false, verifiedDomains = [], keyphrases = [], CLIfetch = null) {
         this.#ANALYSIS_CACHE_SIZE = 100;
 
         this.#inputDomain = "";
@@ -33,6 +38,11 @@ export default class Analyzer {
 
         this.#searcher = new GoogleSearcher();
         this.#phishingDetector = new PhishingDetectorSsdeep();
+
+        this.#commandLine = commandLine;
+        this.#verifiedDomains = verifiedDomains;
+        this.#keyphrases = keyphrases;
+        this.#CLIfetch = CLIfetch;
     }
   
     set inputDomain(inputDomain) {
@@ -82,7 +92,7 @@ export default class Analyzer {
         return this.#phishingDetector;
     }
   
-    async #getVerifiedDomains() {
+    async getVerifiedDomains() {
         // get top domains list
         var topDomains = await utils.getFromStorage("topDomains", "local");
     
@@ -94,7 +104,7 @@ export default class Analyzer {
         return verifiedDomains;
     }   // getVerifiedDomains
 
-    async #isInputDomainInAnalysisCache() {
+    async isInputDomainInAnalysisCache() {
         // get cache of already analyzed domains
         var cache = await utils.getFromStorage("analysisCache", "sync");
 
@@ -110,7 +120,7 @@ export default class Analyzer {
     }   // isInputDomainInAnalysisCache
 
 
-    async #updateAnalysisCache() {
+    async updateAnalysisCache() {
         if(this.#analysis <= Result.NotTypo) {
             return;
         }
@@ -151,37 +161,45 @@ export default class Analyzer {
         if(this.#visitedDomain === "") {
             this.#visitedDomain = this.#inputDomain;
         }
-        if(await this.#isInputDomainInAnalysisCache()) {
-            // load analysis from cache
-            var cache = await utils.getFromStorage("analysisCache", "sync");
-            let indexDomain = cache.findIndex(element => element.domain === this.#inputDomain);
-            this.#target = cache[indexDomain].target;
-            this.#analysis = cache[indexDomain].analysis;
-            this.#otherTargets = cache[indexDomain].otherTargets;
-            var lastAnalysis = {
-                "inputDomain": this.#inputDomain,
-                "visitedDomain": this.#visitedDomain,
-                "target": this.#target,
-                "analysis": this.#analysis,
-                "otherTargets": this.#otherTargets,
-                "dateLastAnalysis": cache[indexDomain].dateLastAnalysis
+        if(!this.#commandLine) {
+            if(await this.isInputDomainInAnalysisCache()) {
+                // load analysis from cache
+                var cache = await utils.getFromStorage("analysisCache", "sync");
+                let indexDomain = cache.findIndex(element => element.domain === this.#inputDomain);
+                this.#target = cache[indexDomain].target;
+                this.#analysis = cache[indexDomain].analysis;
+                this.#otherTargets = cache[indexDomain].otherTargets;
+                var lastAnalysis = {
+                    "inputDomain": this.#inputDomain,
+                    "visitedDomain": this.#visitedDomain,
+                    "target": this.#target,
+                    "analysis": this.#analysis,
+                    "otherTargets": this.#otherTargets,
+                    "dateLastAnalysis": cache[indexDomain].dateLastAnalysis
+                }
+                chrome.storage.local.set({ "lastAnalysis": lastAnalysis });
+                return;
             }
-            chrome.storage.local.set({ "lastAnalysis": lastAnalysis });
-            return;
         }
 
         this.#target = "";
         this.#analysis = Result.Unknown;
         this.#otherTargets = [];
 
-        var verifiedDomains = await this.#getVerifiedDomains();
+        if(this.#verifiedDomains.length === 0) {
+            this.#verifiedDomains = await this.getVerifiedDomains();
+        }
+
+        if(this.#keyphrases.length === 0) {
+            this.#keyphrases = await utils.getFromStorage("keyphrasesDomainParking", "local");
+        }
     
         // check if inputDomain is:
         // - in domains list;
         // - a typo (DL == 1) of some top domain
         var ctargets = [];
         var verifiedDomain;
-        for (verifiedDomain of verifiedDomains) {
+        for (verifiedDomain of this.#verifiedDomains) {
             // if inputDomain is in domains list (DL = 0) then it is definitely not typo
             if (verifiedDomain === this.#inputDomain || verifiedDomain === this.#visitedDomain) {
                 this.#analysis = Result.NotTypo;
@@ -198,24 +216,26 @@ export default class Analyzer {
     
         //check alert
         if (this.#analysis === Result.ProbablyTypo) {
-            var alertAnalysis = await avm.analyzeAlerts(this.#inputDomain, this.#visitedDomain, ctargets, this.#searcher, this.#phishingDetector);
+            var alertAnalysis = await avm.analyzeAlerts(this.#inputDomain, this.#visitedDomain, ctargets, this.#searcher, this.#phishingDetector, this.#keyphrases, this.#CLIfetch);
             
             this.#target = alertAnalysis["target"]; 
             this.#analysis = alertAnalysis["analysis"]; 
             this.#otherTargets = alertAnalysis["otherTargets"]; 
         }
 
-        await this.#updateAnalysisCache();
-        let date = new Date();
-        var lastAnalysis = {
-            "inputDomain": this.#inputDomain,
-            "visitedDomain": this.#visitedDomain,
-            "target": this.#target,
-            "analysis": this.#analysis,
-            "otherTargets": this.#otherTargets,
-            "dateLastAnalysis": `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}`
+        if (!this.#commandLine) {
+            await this.updateAnalysisCache();
+            let date = new Date();
+            var lastAnalysis = {
+                "inputDomain": this.#inputDomain,
+                "visitedDomain": this.#visitedDomain,
+                "target": this.#target,
+                "analysis": this.#analysis,
+                "otherTargets": this.#otherTargets,
+                "dateLastAnalysis": `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}`
+            }
+            chrome.storage.local.set({ "lastAnalysis": lastAnalysis });
         }
-        chrome.storage.local.set({ "lastAnalysis": lastAnalysis });
     
     }   // analyze
 

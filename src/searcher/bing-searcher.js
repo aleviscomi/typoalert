@@ -18,12 +18,17 @@ export default class BingSearcher extends Searcher {
         return this.#dym;
     }
 
-    async search(query) {
+    async search(query, CLIfetch) {
         try {
             const API_KEY = '***';
             var url = `https://api.bing.microsoft.com/v7.0/search?q=${query}&count=10`;
         
-            var response = await fetch(url, { headers: { 'Ocp-Apim-Subscription-Key': API_KEY } });
+            var response;
+            if(CLIfetch != null) {
+                response = await CLIfetch(url, { headers: { 'Ocp-Apim-Subscription-Key': API_KEY } });
+            } else {
+                response = await fetch(url);
+            }
             var data = await response.json();
         
             // get URLs of results

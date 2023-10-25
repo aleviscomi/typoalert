@@ -18,9 +18,16 @@ export default class GoogleSearcher extends Searcher {
         return this.#dym;
     }
 
-    async search(query) {
+    async search(query, CLIfetch = null) {
         try {
-            var response = await fetch(`https://www.google.com/search?q=${query}&num=10`);
+            var url = `https://www.google.com/search?q=${query}&num=10`;
+
+            var response;
+            if(CLIfetch != null) {
+                response = await CLIfetch(url);
+            } else {
+                response = await fetch(url);
+            }
             var data = await response.text();
 
             // get URLs of results
